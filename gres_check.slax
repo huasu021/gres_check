@@ -1,0 +1,76 @@
+/*
+*  Author        : huasu@juniper.net
+*  Version       :
+*  Platform      : All dual RE Junos Platform
+*  Release       : 0.1
+*  Description   : This script is for GRES status check by periodically excuting command 'request chassis routing-engine master switch check',
+*  if switchover check fail, script will generate a syslog with "GRES switchover is not ok", if check successfully, generate syslog with "GRES switchover is ok"
+* Config sample:
+set event-options generate-event 60s time-interval 60 (check interval can be adjusted, here I use 60s)
+set event-options policy gres_check events 60s
+set event-options policy gres_check then event-script gres_check.slax
+set event-options policy gres_check_trap events SYSTEM
+set event-options policy gres_check_trap attributes-match SYSTEM.message matches "GRES switchover is not ok"
+set event-options policy gres_check_trap then raise-trap
+set event-options event-script file gres_check.slax
+
+*  Revision History:
+*  0.1  27/10/2018- initial release
+*
+********************************************************************************
+*
+*  Copyright (c) 2016  Juniper Networks. All Rights Reserved.
+*
+*  YOU MUST ACCEPT THE TERMS OF THIS DISCLAIMER TO USE THIS SOFTWARE
+*
+*  JUNIPER IS WILLING TO MAKE THE INCLUDED SCRIPTING SOFTWARE AVAILABLE TO YOU
+*  ONLY UPON THE CONDITION THAT YOU ACCEPT ALL OF THE TERMS CONTAINED IN THIS
+*  DISCLAIMER. PLEASE READ THE TERMS AND CONDITIONS OF THIS DISCLAIMER
+*  CAREFULLY.
+*
+*  THE SOFTWARE CONTAINED IN THIS FILE IS PROVIDED "AS IS." JUNIPER MAKES NO
+*  WARRANTIES OF ANY KIND WHATSOEVER WITH RESPECT TO SOFTWARE. ALL EXPRESS OR
+*  IMPLIED CONDITIONS, REPRESENTATIONS AND WARRANTIES, INCLUDING ANY WARRANTY
+*  OF NON-INFRINGEMENT OR WARRANTY OF MERCHANTABILITY OR FITNESS FOR A
+*  PARTICULAR PURPOSE, ARE HEREBY DISCLAIMED AND EXCLUDED TO THE EXTENT
+*  ALLOWED BY APPLICABLE LAW.
+*
+*  IN NO EVENT WILL JUNIPER BE LIABLE FOR ANY LOST REVENUE, PROFIT OR DATA, OR
+*  FOR DIRECT, SPECIAL, INDIRECT, CONSEQUENTIAL, INCIDENTAL OR PUNITIVE
+*  DAMAGES HOWEVER CAUSED AND REGARDLESS OF THE THEORY OF LIABILITY ARISING
+*  OUT OF THE USE OF OR INABILITY TO USE THE SOFTWARE, EVEN IF JUNIPER HAS
+*  BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
+*
+*/
+
+
+version 1.0;
+
+ns junos = "http://xml.juniper.net/junos/*/junos";
+ns xnm = "http://xml.juniper.net/xnm/1.1/xnm";
+ns jcs = "http://xml.juniper.net/junos/commit-scripts/1.0";
+ns ext = "http://xmlsoft.org/XSLT/namespace";
+
+import "../import/junos.xsl";
+
+
+
+
+var $gres_check = <command> "request chassis routing-engine master switch check";
+var $data1 = jcs:invoke($gres_check);
+
+
+
+
+
+match / {
+  <op-script-results> {
+
+  	if( $data1 == "Switchover Ready" ){
+  		expr jcs:syslog( "external.warning", "GRES switchover is ok" );
+  	}
+  	else if( $data1 != "Switchover Ready" ){
+  		expr jcs:syslog( "external.error", "GRES switchover is not ok" );
+  	}
+  }
+}
