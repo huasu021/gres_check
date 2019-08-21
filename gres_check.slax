@@ -5,7 +5,7 @@
 *  Release       : 0.1
 *  Description   : This script is for GRES status check by periodically excuting command 'request chassis routing-engine master switch check',
 *  if switchover check fail, script will generate a syslog with "GRES switchover is not ok", if check successfully, generate syslog with "GRES switchover is ok"
-* Config sample:
+*  Config sample:
 set event-options generate-event 60s time-interval 60 (check interval can be adjusted, here I use 60s)
 set event-options policy gres_check events 60s
 set event-options policy gres_check then event-script gres_check.slax
